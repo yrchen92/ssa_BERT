@@ -1,0 +1,17 @@
+[
+    {
+        "name": "train_batch_size",
+        "type": "choice",
+        "values": [32, 16]
+    },
+    {
+        "name": "learning_rate",
+        "type": "choice",
+        "values": [2e-5, 1e-5]
+    },
+    {
+        "name": "num_train_epochs",
+        "type": "choice",
+        "values": [2.0, 3.0]
+    }
+]

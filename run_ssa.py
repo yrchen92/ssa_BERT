@@ -204,6 +204,22 @@ parser.add_argument("--do_first_eval",
                     type=int,
                     help="Whether to do first test.")
 
+parser.add_argument("--available_gpus",
+                    default='0,1',
+                    type=str,
+                    help="available_gpus")
+parser.add_argument("--need_gpus",
+                    default=1,
+                    type=int,
+                    help="need_gpus")
+parser.add_argument("--conf_file",
+                    default='./conf.json',
+                    type=str,
+                    help="seach space configuration")
+parser.add_argument("--job_id",
+                    default=0,
+                    type=int,
+                    help="job id")
 
 args = parser.parse_args()
 
@@ -278,7 +294,7 @@ def accuracy(out, labels, type="seq", task_name="others"):
         return res,num_tokens
 
 
-def main(args):
+def main(args): 
     if args.server_ip and args.server_port:
         # Distant debugging - see https://code.visualstudio.com/docs/python/debugging#_attach-to-a-local-script
         import ptvsd
@@ -287,7 +303,7 @@ def main(args):
         ptvsd.wait_for_attach()
 
     args.data_dir = os.path.join(args.data_dir, args.task_name)
-    args.output_dir = os.path.join(args.output_dir, args.task_name)
+    args.output_dir = os.path.join(args.output_dir, args.task_name, str(args.job_id))
     logger.info("args = %s", args)
 
     processors = {
@@ -671,6 +687,8 @@ def main(args):
 
                 else:
                     logger.info("  tmp_val_acc = %f", tmp_acc)
+
+        return best_val_acc, result
 
 
 def do_evaluate(args, processor, label_list, tokenizer, model, epoch, output_mode, num_labels, task_name, eval_examples, type="dev"):

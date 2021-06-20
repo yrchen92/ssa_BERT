@@ -113,7 +113,10 @@ class MrpcProcessor(DataProcessor):
             guid = "%s-%s" % (set_type, i)
             text_a = line[3]
             text_b = line[4]
-            label = line[0]
+            if set_type == "test":
+                label = "0"
+            else:
+                label = line[0]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
@@ -205,7 +208,10 @@ class ColaProcessor(DataProcessor):
         for (i, line) in enumerate(lines):
             guid = "%s-%s" % (set_type, i)
             text_a = line[3]
-            label = line[1]
+            if set_type == "test":
+                label = "0"
+            else:
+                label = line[1]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
         return examples
@@ -254,7 +260,10 @@ class Sst2Processor(DataProcessor):
                 continue
             guid = "%s-%s" % (set_type, i)
             text_a = line[0]
-            label = line[1]
+            if set_type == "test":
+                label = "0"
+            else:
+                label = line[1]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
         return examples
@@ -303,7 +312,10 @@ class StsbProcessor(DataProcessor):
             guid = "%s-%s" % (set_type, line[0])
             text_a = line[7]
             text_b = line[8]
-            label = line[-1]
+            if set_type == "test":
+                label = 0
+            else:
+                label = line[-1]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
@@ -460,7 +472,10 @@ class RteProcessor(DataProcessor):
             guid = "%s-%s" % (set_type, line[0])
             text_a = line[1]
             text_b = line[2]
-            label = line[-1]
+            if set_type == "test":
+                label = "entailment"
+            else:
+                label = line[-1]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples

@@ -26,6 +26,10 @@ ckpt/
 ckpt_large/
 ckpt_r_base/
 ckpt_r_large/
+eda_glue_data/
+checkpoint/
+ssa_ckpt_base/
+results_final/
 
 data/
 out/

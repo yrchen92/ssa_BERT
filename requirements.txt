@@ -1,0 +1,15 @@
+requests==2.25.1
+tensorflow_gpu==1.14.0
+scipy==1.5.4
+pandas==1.1.5
+numpy==1.19.5
+torch==1.7.1
+six==1.15.0
+apex==0.9.10dev
+boto3==1.17.38
+botocore==1.20.38
+ptvsd==4.3.2
+regex==2021.3.17
+scikit_learn==0.24.1
+tqdm==4.59.0
+transformers==4.4.2
