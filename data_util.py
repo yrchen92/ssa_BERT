@@ -953,6 +953,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                                  output_mode="classification", seed=42, args=None, pad_token=0, do_roberta=0):
     """Loads a data file into a list of `InputBatch`s."""
 
+    len_max = 0
     np.random.seed(seed)
     label_map = {label : i for i, label in enumerate(label_list)}
 
@@ -1018,6 +1019,8 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
             #print("tokens_a,b", tokens,rand_index_a,rand_index_b,rand_token_a,rand_token_b,token_real_label)
 
         input_ids = tokenizer.convert_tokens_to_ids(tokens)
+        if len(input_ids) > len_max:
+            len_max = len(input_ids)
 
         # The mask has 1 for real tokens and 0 for padding tokens. Only real
         # tokens are attended to.
@@ -1066,6 +1069,9 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                               label_id=label_id,
                               token_real_label=token_real_label))
         ex_index+=1
+
+    logger.info("*** MAX LENGTH ***")
+    logger.info(len_max)
 
     return features
 

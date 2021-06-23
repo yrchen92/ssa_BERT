@@ -1,0 +1,33 @@
+[   
+    {
+        "name": "num_train_epochs",
+        "type": "choice",
+        "values": [4.0, 6.0]
+    },
+    {
+        "name": "train_batch_size",
+        "type": "choice",
+        "values": [24, 16]
+    },
+    {
+        "name": "learning_rate",
+        "type": "choice",
+        "values": [2e-5, 1e-5]
+    },
+    {
+        "name": "aug_loss_weight",
+        "type": "choice",
+        "values": [0.1, 0.3]
+    },
+    {
+        "name": "cls_weight",
+        "type": "choice",
+        "values": [0.9, 0.5]
+    },
+    {
+        "name": "task_name",
+        "type": "choice",
+        "values": ["semeval_NLI_M", "semeval_NLI_B", "semeval_QA_M", "semeval_QA_B"]
+    }
+
+]
