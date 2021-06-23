@@ -85,7 +85,7 @@ parser.add_argument("--cache_dir",
                     type=str,
                     help="Where do you want to store the pre-trained models downloaded from s3")
 parser.add_argument("--max_seq_length",
-                    default=128,
+                    default=256,
                     type=int,
                     help="The maximum total input sequence length after WordPiece tokenization. \n"
                          "Sequences longer than this will be truncated, and sequences shorter \n"
@@ -268,9 +268,8 @@ def compute_metrics(task_name, preds, labels):
         return {"acc": simple_accuracy(preds, labels)}
     elif task_name == "wnli":
         return {"acc": simple_accuracy(preds, labels)}
-
     else:
-        raise KeyError(task_name)
+        return {"acc": simple_accuracy(preds, labels)}
 
 def accuracy(out, labels, type="seq", task_name="others"):
     if type == "seq":
@@ -302,32 +301,34 @@ def main(args):
         ptvsd.enable_attach(address=(args.server_ip, args.server_port), redirect_output=True)
         ptvsd.wait_for_attach()
 
-    args.data_dir = os.path.join(args.data_dir, args.task_name)
+    # args.data_dir = os.path.join(args.data_dir, args.task_name)
     args.output_dir = os.path.join(args.output_dir, args.task_name, str(args.job_id))
     logger.info("args = %s", args)
 
     processors = {
-        "cola": ColaProcessor,
-        "mnli": MnliProcessor,
-        "mrpc": MrpcProcessor,
-        "sst-2": Sst2Processor,
-        "sts-b": StsbProcessor,
-        "qqp": QqpProcessor,
-        "qnli": QnliProcessor,
-        "rte": RteProcessor,
-        "wnli": WnliProcessor,
+        "sentihood_single":Sentihood_single_Processor,
+        "sentihood_NLI_M":Sentihood_NLI_M_Processor,
+        "sentihood_QA_M":Sentihood_QA_M_Processor,
+        "sentihood_NLI_B":Sentihood_NLI_B_Processor,
+        "sentihood_QA_B":Sentihood_QA_B_Processor,
+        "semeval_single":Semeval_single_Processor,
+        "semeval_NLI_M":Semeval_NLI_M_Processor,
+        "semeval_QA_M":Semeval_QA_M_Processor,
+        "semeval_NLI_B":Semeval_NLI_B_Processor,
+        "semeval_QA_B":Semeval_QA_B_Processor,
     }
 
     output_modes = {
-        "cola": "classification",
-        "mnli": "classification",
-        "mrpc": "classification",
-        "sst-2": "classification",
-        "sts-b": "regression",
-        "qqp": "classification",
-        "qnli": "classification",
-        "rte": "classification",
-        "wnli": "classification",
+        "sentihood_single":"classification",
+        "sentihood_NLI_M":"classification",
+        "sentihood_QA_M":"classification",
+        "sentihood_NLI_B":"classification",
+        "sentihood_QA_B":"classification",
+        "semeval_single":"classification",
+        "semeval_NLI_M":"classification",
+        "semeval_QA_M":"classification",
+        "semeval_NLI_B":"classification",
+        "semeval_QA_B":"classification",
     }
 
     if args.local_rank == -1 or args.no_cuda:
@@ -366,7 +367,7 @@ def main(args):
             pass
             logger.info("catch a error")
 
-    task_name = args.task_name.lower()
+    task_name = args.task_name
 
     if task_name not in processors:
         raise ValueError("Task not found: %s" % (task_name))
@@ -463,6 +464,16 @@ def main(args):
 
     best_val_acc = 0.0
     result = {}
+
+    # train
+    # output_log_file = os.path.join(args.output_dir, "log.txt")
+    # print("output_log_file=",output_log_file)
+    # with open(output_log_file, "w") as writer:
+    #     if args.eval_test:
+    #         writer.write("epoch\tglobal_step\tloss\ttest_loss\ttest_accuracy\n")
+    #     else:
+    #         writer.write("epoch\tglobal_step\tloss\n")
+
     if args.do_train:
         # Prepare optimizer
         param_optimizer = list(model.named_parameters())
@@ -533,6 +544,7 @@ def main(args):
                     seq_logits = model(input_ids, segment_ids, input_mask, labels=None)
                 else:
                     seq_logits, aug_logits, aug_loss = model(input_ids, segment_ids, input_mask, labels=None, token_real_label=token_real_label)
+                
                 if output_mode == "classification":
                     loss_fct = CrossEntropyLoss()
                     seq_loss = loss_fct(seq_logits.view(-1, num_labels), label_ids.view(-1))
@@ -663,7 +675,7 @@ def main(args):
                         res_file = os.path.join(args.output_dir,
                                                     "test_" + str(tmp_acc)+".tsv")
 
-                        idx, preds, test_res = do_test(args, label_list, task_name, processor, tokenizer, output_mode, model)
+                        idx, preds, test_res = do_test(args, label_list, task_name, processor, tokenizer, output_mode, model, epoch=epoch+1)
                         if "acc" in test_res:
                             result['test_acc'] = test_res["acc"]
                         if "mcc" in test_res:
@@ -874,7 +886,7 @@ def do_evaluate(args, processor, label_list, tokenizer, model, epoch, output_mod
 
     return eval_loss, eval_seq_loss, eval_aug_loss, res, eval_aug_accuracy, res_parts
 
-def do_test(args, label_list, task_name, processor, tokenizer, output_mode, model, do_mm=False):
+def do_test(args, label_list, task_name, processor, tokenizer, output_mode, model, do_mm=False, epoch=0):
     label_map = {i: label for i, label in enumerate(label_list)}
     if do_mm:
         test_w_examples = processor.get_mm_test_examples(args.data_dir)
@@ -905,42 +917,50 @@ def do_test(args, label_list, task_name, processor, tokenizer, output_mode, mode
     preds = []
     all_labels = []
     idx = 0
-    for batch in eval_dataloader:
-        batch = tuple(t.cuda() for t in batch)
-        input_ids, input_mask, segment_ids, label_ids, token_real_label = batch
-        with torch.no_grad():
-            if args.only_bert:
-                seq_logits = model(input_ids, segment_ids, input_mask, labels=None)
-            else:
-                seq_logits, aug_logits, aug_loss = model(input_ids, segment_ids, input_mask, labels=None,
-                                                     token_real_label=token_real_label)
+    output_test_file = os.path.join(args.output_dir, f"test_ep_{epoch}.txt")
+    with open(output_test_file, "w") as f_test:
+        for batch in eval_dataloader:
+            batch = tuple(t.cuda() for t in batch)
+            input_ids, input_mask, segment_ids, label_ids, token_real_label = batch
+            with torch.no_grad():
+                if args.only_bert:
+                    seq_logits = model(input_ids, segment_ids, input_mask, labels=None)
+                else:
+                    seq_logits, aug_logits, aug_loss = model(input_ids, segment_ids, input_mask, labels=None,
+                                                         token_real_label=token_real_label)
+                seq_logits = F.softmax(seq_logits, dim=-1)
+                seq_logits = seq_logits.detach().cpu().numpy()
+                label_ids = label_ids.detach().cpu().numpy()
 
-            seq_logits = seq_logits.detach().cpu().numpy()
-            label_ids = label_ids.detach().cpu().numpy()
+                if len(preds) == 0:
+                    preds.append(seq_logits)
+                    all_labels.append(label_ids)
+                else:
+                    preds[0] = np.append(preds[0], seq_logits, axis=0)
+                    all_labels[0] = np.append(all_labels[0], label_ids, axis=0)
 
-            if len(preds) == 0:
-                preds.append(seq_logits)
-                all_labels.append(label_ids)
-            else:
-                preds[0] = np.append(preds[0], seq_logits, axis=0)
-                all_labels[0] = np.append(all_labels[0], label_ids, axis=0)
+                if output_mode == "classification":
+                    outputs = np.argmax(seq_logits, axis=1)
+                    for i in range(outputs.shape[0]):
+                        pred_label = label_map[outputs[i]]
+                        preds.append(pred_label)
+                        idx += 1
 
-            if output_mode == "classification":
-                outputs = np.argmax(seq_logits, axis=1)
-                for i in range(outputs.shape[0]):
-                    pred_label = label_map[outputs[i]]
-                    preds.append(pred_label)
-                    idx += 1
+                    for output_i in range(len(outputs)):
+                        f_test.write(str(outputs[output_i]))
+                        for ou in seq_logits[output_i]:
+                            f_test.write(" "+str(ou))
+                        f_test.write("\n")
 
-            elif output_mode == "regression":
-                outputs = np.squeeze(seq_logits)
-                for i in range(outputs.shape[0]):
-                    if outputs[i] > 5:
-                        outputs[i] = 5
-                    if outputs[i] < 0:
-                        outputs[i] = 0
-                    preds.append(outputs[i])
-                    idx += 1
+                elif output_mode == "regression":
+                    outputs = np.squeeze(seq_logits)
+                    for i in range(outputs.shape[0]):
+                        if outputs[i] > 5:
+                            outputs[i] = 5
+                        if outputs[i] < 0:
+                            outputs[i] = 0
+                        preds.append(outputs[i])
+                        idx += 1
 
     tmp_pred = preds[0]
     tmp_labels = all_labels[0]

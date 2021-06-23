@@ -1,0 +1,7 @@
+[   
+    {
+        "name": "num_train_epochs",
+        "type": "choice",
+        "values": [1.0]
+    }
+]

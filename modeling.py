@@ -600,15 +600,21 @@ class BertPreTrainedModel(nn.Module):
         # Load from a PyTorch state_dict
         old_keys = []
         new_keys = []
+        pop_keys = []
         for key in state_dict.keys():
             new_key = None
             if 'gamma' in key:
                 new_key = key.replace('gamma', 'weight')
             if 'beta' in key:
                 new_key = key.replace('beta', 'bias')
+            if 'seq_cls.classifier' in key:
+                pop_keys.append(key)
+                continue
             if new_key:
                 old_keys.append(key)
                 new_keys.append(new_key)
+        for pop_key in pop_keys:
+            state_dict.pop(pop_key)
         for old_key, new_key in zip(old_keys, new_keys):
             state_dict[new_key] = state_dict.pop(old_key)
 
@@ -1115,14 +1121,23 @@ class BertForNSPAug(BertPreTrainedModel):
         self.args = args
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None, token_real_label=None):
+        # accelerate the training speed
+        len_input = torch.sum(attention_mask, dim=-1)
+        len_input_max = torch.max(len_input).item()
+        input_ids = input_ids[:,:len_input_max]
+        token_type_ids = token_type_ids[:,:len_input_max]
+        attention_mask = attention_mask[:,:len_input_max]
+        token_real_label = token_real_label[:,:len_input_max]
+
         sequence_output, pooled_output = self.bert(input_ids, token_type_ids, attention_mask,
                                                    output_all_encoded_layers=False,
                                                    token_real_label=token_real_label)
+        
         aug_logits = self.token_cls(sequence_output)
         seq_logits = self.seq_cls(sequence_output, attention_mask, token_real_label, aug_logits, pooled_output)
 
         loss_fct_aug = CrossEntropyLoss(ignore_index=-1)
-        aug_loss = loss_fct_aug(aug_logits.view(-1, 2), token_real_label.view(-1))
+        aug_loss = loss_fct_aug(aug_logits.view(-1, 2), token_real_label.reshape(token_real_label.size(0)*token_real_label.size(1)))
 
         if labels is not None:
             loss_fct_seq = CrossEntropyLoss(ignore_index=-1)
@@ -1154,6 +1169,14 @@ class BertForNSP_co(BertPreTrainedModel):
         self.classifier = nn.Linear(config.hidden_size, num_labels)
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None, token_real_label=None):
+        
+        len_input = torch.sum(attention_mask, dim=-1)
+        len_input_max = torch.max(len_input).item()
+        input_ids = input_ids[:,:len_input_max]
+        token_type_ids = token_type_ids[:,:len_input_max]
+        attention_mask = attention_mask[:,:len_input_max]
+        token_real_label = token_real_label[:,:len_input_max]
+
         sequence_output, pooled_output = self.bert(input_ids, token_type_ids, attention_mask,
                                                    output_all_encoded_layers=False,
                                                    token_real_label=token_real_label)
@@ -1163,7 +1186,7 @@ class BertForNSP_co(BertPreTrainedModel):
         seq_logits = self.classifier(pooled_output)
 
         loss_fct_aug = CrossEntropyLoss(ignore_index=-1)
-        aug_loss = loss_fct_aug(aug_logits.view(-1, 2), token_real_label.view(-1))
+        aug_loss = loss_fct_aug(aug_logits.view(-1, 2), token_real_label.reshape(token_real_label.size(0)*token_real_label.size(1)))
 
         if labels is not None:
             loss_fct_seq = CrossEntropyLoss(ignore_index=-1)
@@ -1230,6 +1253,12 @@ class BertForSequenceClassification(BertPreTrainedModel):
         self.apply(self.init_bert_weights)
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None):
+        #len_input = torch.sum(attention_mask, dim=-1)
+        #len_input_max = torch.max(len_input).item()
+        #input_ids = input_ids[:,:len_input_max]
+        #token_type_ids = token_type_ids[:,:len_input_max]
+        #attention_mask = attention_mask[:,:len_input_max]
+        
         _, pooled_output = self.bert(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)

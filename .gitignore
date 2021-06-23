@@ -19,6 +19,7 @@ glue_data/
 bert_models/
 results/
 results_Roberta/
+absa_data/
 
 glue_bert_large_saved/
 glue_bert_saved/

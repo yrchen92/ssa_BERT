@@ -13,7 +13,7 @@ from functools import partial
 from functools import total_ordering
 from multiprocessing import Process, Manager
 
-from run_ssa import args, main
+from run_absa import args, main
 
 _args = args
 _sys_stdout = sys.stdout

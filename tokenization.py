@@ -21,6 +21,7 @@ import logging
 import os
 import unicodedata
 from io import open
+import six
 
 from file_utils import cached_path
 
@@ -46,6 +47,47 @@ PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP = {
 }
 VOCAB_NAME = 'vocab.txt'
 
+def convert_to_unicode(text):
+    """Converts `text` to Unicode (if it's not already), assuming utf-8 input."""
+    if six.PY3:
+        if isinstance(text, str):
+            return text
+        elif isinstance(text, bytes):
+            return text.decode("utf-8", "ignore")
+        else:
+            raise ValueError("Unsupported string type: %s" % (type(text)))
+    elif six.PY2:
+        if isinstance(text, str):
+            return text.decode("utf-8", "ignore")
+        elif isinstance(text, unicode):
+            return text
+        else:
+            raise ValueError("Unsupported string type: %s" % (type(text)))
+    else:
+        raise ValueError("Not running on Python2 or Python 3?")
+
+
+def printable_text(text):
+    """Returns text encoded in a way suitable for print or `tf.logging`."""
+
+    # These functions want `str` for both Python2 and Python3, but in one case
+    # it's a Unicode string and in the other it's a byte string.
+    if six.PY3:
+        if isinstance(text, str):
+            return text
+        elif isinstance(text, bytes):
+            return text.decode("utf-8", "ignore")
+        else:
+            raise ValueError("Unsupported string type: %s" % (type(text)))
+    elif six.PY2:
+        if isinstance(text, str):
+            return text
+        elif isinstance(text, unicode):
+            return text.encode("utf-8")
+        else:
+            raise ValueError("Unsupported string type: %s" % (type(text)))
+    else:
+        raise ValueError("Not running on Python2 or Python 3?")
 
 def load_vocab(vocab_file):
     """Loads a vocabulary file into a dictionary."""

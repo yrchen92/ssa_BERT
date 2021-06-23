@@ -2,26 +2,22 @@
     {
         "name": "num_train_epochs",
         "type": "choice",
-        "values": [2.0, 3.0, 5.0]
+        "values": [4.0, 6.0]
     },
     {
         "name": "train_batch_size",
         "type": "choice",
-        "values": [32, 16]
+        "values": [8, 16, 24]
     },
     {
         "name": "learning_rate",
         "type": "choice",
-        "values": [2e-5, 1e-5, 3e-5]
+        "values": [2e-5, 1e-5]
     },
     {
-        "name": "cls_weight",
+        "name": "task_name",
         "type": "choice",
-        "values": [0.3, 0.5, 0.7]
-    },
-    {
-        "name": "attention_threshold",
-        "type": "choice",
-        "values": [0.3, 0.5, 0.7]
+        "values": ["sentihood_NLI_B", "sentihood_NLI_M", "sentihood_QA_B", "sentihood_QA_M"]
     }
+
 ]
