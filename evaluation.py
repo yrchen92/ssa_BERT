@@ -31,7 +31,7 @@ def get_y_true(task_name):
                 n = 2
             y_true.append(n)
     else:
-        true_data_file = "absa_data/sentihood/bert-pair/test_NLI_M.csv"
+        true_data_file = "absa_data/semeval2014/bert-pair/test_NLI_M.csv"
 
         df = pd.read_csv(true_data_file,sep='\t',header=None).values
         y_true=[]
@@ -406,11 +406,21 @@ def main():
     elif os.path.isfile(args.pred_data_dir):
         pred_data_files.append(args.pred_data_dir)
 
-    result_max = {'aspect_strict_Acc': 0,
+
+    if 'sentihood' in args.task_name:
+        result_max = {'aspect_strict_Acc': 0,
                         'aspect_Macro_F1': 0,
                         'aspect_Macro_AUC': 0,
                         'sentiment_Acc': 0,
                         'sentiment_Macro_AUC': 0}
+    else:
+        result_max = {'aspect_P': 0,
+                        'aspect_R': 0,
+                        'aspect_F': 0,
+                        'sentiment_Acc_4_classes': 0,
+                        'sentiment_Acc_3_classes': 0,
+                        'sentiment_Acc_2_classes': 0}
+
     result_max_files = {}
 
     for index, f in enumerate(pred_data_files):
