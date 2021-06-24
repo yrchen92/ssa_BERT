@@ -7,7 +7,7 @@ CONF_FILE=hparams_absa.json
 echo "it's: ${TASK_NAME}"
 python -u search_hparam.py \
   --data_dir=./absa_data/sentihood/bert-pair/ \
-  --output_dir=./results_final/absa/${TASK_NAME} \
+  --output_dir=./results_final/absa2/${TASK_NAME} \
   --bert_model='bert-base-uncased' \
   --ckpt='./results/bert_model' \
   --use_saved=1 \

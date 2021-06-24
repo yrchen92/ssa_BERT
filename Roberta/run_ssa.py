@@ -202,6 +202,23 @@ parser.add_argument("--do_first_eval",
                     type=int,
                     help="Whether to do first test.")
 
+parser.add_argument("--available_gpus",
+                    default='0,1',
+                    type=str,
+                    help="available_gpus")
+parser.add_argument("--need_gpus",
+                    default=1,
+                    type=int,
+                    help="need_gpus")
+parser.add_argument("--conf_file",
+                    default='./conf.json',
+                    type=str,
+                    help="seach space configuration")
+parser.add_argument("--job_id",
+                    default=0,
+                    type=int,
+                    help="job id")
+
 parser.add_argument("--weight_decay", default=0.1, type=float, help="Weight deay if we apply some.")
 parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
 parser.add_argument("--warmup_rate", default=0.06, type=float, help="Linear warmup over warmup_steps.")
@@ -299,7 +316,7 @@ def main(args):
         ptvsd.wait_for_attach()
 
     args.data_dir = os.path.join(args.data_dir, args.task_name)
-    args.output_dir = os.path.join(args.output_dir, args.task_name)
+    args.output_dir = os.path.join(args.output_dir, args.task_name, str(args.job_id))
     logger.info("args = %s", args)
 
     processors = {
@@ -465,6 +482,8 @@ def main(args):
             logger.info("  Done write mm")
 
 
+    best_val_acc = 0.0
+    result = {}
     if args.do_train:
         # Prepare optimizer
         no_decay = ['bias', 'LayerNorm.weight']
@@ -491,6 +510,7 @@ def main(args):
         aug_ratio = 0.0
         aug_seed = np.random.randint(0, 1000)
         for epoch in range(int(args.num_train_epochs)):
+            model.train()
             if args.only_bert:
                 train_features = convert_examples_to_features(ori_train_examples, label_list, args.max_seq_length,
                                 tokenizer, num_show=args.num_show, output_mode=output_mode, args=args,
@@ -685,7 +705,7 @@ def main(args):
                             res_file = os.path.join(args.output_dir,
                                                     "mm_roberta_results_b_" + str(tmp_acc) + ".tsv")
 
-                            idx, preds = do_test(args, label_list, task_name, processor, tokenizer, output_mode, do_mm=True)
+                            idx, preds = do_test(args, label_list, task_name, processor, tokenizer, output_mode, model, do_mm=True)
 
                             dataframe = pd.DataFrame({'index': range(idx), 'prediction': preds})
                             dataframe.to_csv(res_file, index=False, sep='\t')
@@ -694,6 +714,7 @@ def main(args):
 
                 else:
                     logger.info("  tmp_val_acc = %f", tmp_acc)
+    return best_val_acc, result
 
 
 def do_evaluate(args, processor, label_list, tokenizer, model, epoch, output_mode, num_labels, task_name, eval_examples, type="dev"):

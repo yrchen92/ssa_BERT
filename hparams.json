@@ -5,23 +5,18 @@
         "values": [2.0, 3.0, 5.0]
     },
     {
-        "name": "train_batch_size",
-        "type": "choice",
-        "values": [32, 16]
-    },
-    {
         "name": "learning_rate",
         "type": "choice",
-        "values": [2e-5, 1e-5, 3e-5]
+        "values": [2e-5, 1e-5]
     },
     {
         "name": "cls_weight",
         "type": "choice",
-        "values": [0.3, 0.5, 0.7]
+        "values": [0.2, 0.5, 0.8]
     },
     {
-        "name": "attention_threshold",
+        "name": "aug_loss_weight",
         "type": "choice",
-        "values": [0.3, 0.5, 0.7]
+        "values": [0.1, 0.3, 0.5]
     }
 ]

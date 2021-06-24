@@ -10,6 +10,7 @@ __pycache__/
 .idea/
 
 
+Roberta/ssa_base/
 # C extensions
 *.so
 
@@ -27,6 +28,7 @@ ckpt/
 ckpt_large/
 ckpt_r_base/
 ckpt_r_large/
+ssa_ckpt_r_large/
 eda_glue_data/
 checkpoint/
 ssa_ckpt_base/

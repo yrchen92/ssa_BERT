@@ -7,12 +7,22 @@
     {
         "name": "train_batch_size",
         "type": "choice",
-        "values": [8, 16, 24]
+        "values": [16, 24, 32]
     },
     {
         "name": "learning_rate",
         "type": "choice",
         "values": [2e-5, 1e-5]
+    },
+    {
+        "name": "aug_loss_weight",
+        "type": "choice",
+        "values": [0.1, 0.3]
+    },
+    {
+        "name": "cls_weight",
+        "type": "choice",
+        "values": [0.9, 0.5]
     },
     {
         "name": "task_name",
