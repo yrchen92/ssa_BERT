@@ -18,6 +18,6 @@ python -u search_hparam.py \
   --attention_threshold=0.1 \
   --share_weight=1 \
   --conf_file=${CONF_FILE} \
-  --available_gpus=0,1,2,3,4,5,6 \
-  --need_gpus=1 \
+  --available_gpus=0,1,2,3,4,5,6,7 \
+  --need_gpus=4 \
 "$@"
